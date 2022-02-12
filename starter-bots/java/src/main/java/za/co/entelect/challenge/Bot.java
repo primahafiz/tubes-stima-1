@@ -352,85 +352,125 @@ public class Bot {
     //     return 0;
     // }
     
-    
-
-    // Fungsi buat ngecek apakah ada obstacle di depannya posisi  
-    private boolean isNabrakObstacleInfront_atCurrentLane(int lane, int curblock){
-        Lane[] curLane=gameState.lanes.get(lane-1);
-        int block=gameState.lanes.get(0)[0].position.block;
-        if (!hasPowerUp(PowerUps.BOOST)){
-            for (int i = max(block-curblock+1,0); i <= block - curblock + getCurSpeed(0, false); i++) {
-                if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
-                    break;
-                }
-                else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
-                    return true;
-                }
+    // Fungsi buat ngecek apakah ada obstacle di depannya posisinya setelah Turn_Left
+    private boolean isNabrakObstacleInfront_atCurrentLane(int lane, int curblock, boolean isBooster, boolean isNextBooster){
+        int kerusakan = myCar.damage;
+        int NextSpeed;
+        Lane[] curLane = gameState.lanes.get(lane-1);
+        int block = gameState.lanes.get(0)[0].position.block;
+        for (int i = max(curblock - block + 1, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
+                kerusakan += 1;
+            }
+            else if (curLane[i].terrain==Terrain.WALL){
+                kerusakan += 2;
             }
         }
+        // Kecepatan mobil di next round ketika setelah Turn_Left
+        if (kerusakan == 5){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 0);
+        }
+        else if (kerusakan == 4){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 3);
+        }
+        else if (kerusakan == 3){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 6);
+        }
+        else if (kerusakan == 2){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 8);
+        }
+        else if (kerusakan == 1){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 9);
+        }
         else{
-            for (int i = curblock; i <= curblock + getCurSpeed(0, true); i++) {
-                if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
-                    break;
-                }
-                else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
-                    return true;
-                }
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 15);
+        }
+        // Buat cek apakah ada obstacle yang bakal ketabrak di depan bloknya
+        for (int i = curblock - block + getCurSpeed(0, isBooster) + 1; i <= curblock - block + getCurSpeed(0, isBooster) + NextSpeed; i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
+                return true;
             }
         }
         return false;
     }
 
-    private boolean isNabrak_turnLeft(int lane, int curblock){
+    // Fungsi untuk mengecek apakah bakal nabrak pada posisi tersebut
+    private boolean isNabrak_turning(int lane, int curblock, boolean isBooster){
         Lane[] curLane=gameState.lanes.get(lane-1);
-        int block=gameState.lanes.get(0)[0].position.block;
-        if (curLane[curblock].terrain==Terrain.MUD || curLane[curblock].terrain==Terrain.OIL_SPILL || curLane[curblock].terrain==Terrain.WALL){
-            return true;
+        int block = gameState.lanes.get(0)[0].position.block;
+        for (int i = max(curblock - block, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
+                return true;
+            }
         }
-        else{
-            return false;
-        }
-    }
-
-    private boolean isNabrak_turnRight(int lane, int curblock){
-        Lane[] curLane=gameState.lanes.get(lane);
-        int block=gameState.lanes.get(0)[0].position.block;
-        if (curLane[curblock].terrain==Terrain.MUD || curLane[curblock].terrain==Terrain.OIL_SPILL || curLane[curblock].terrain==Terrain.WALL){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return false;
     }
 
     // Fungsi buat coommand Turn_Left
-    private int UseTurn_Left(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
-            return 5;
+    private int UseTurn_Left(boolean isBooster, boolean isNextBooster){
+        if (myCar.position.lane - 1 >= 0){
+            if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                return 5;
+            }
+            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                return 4;
+            }
+            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
+                return 1;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                return 3;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                return 2;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                return 1;
+            }
+            else {
+                return 0;
+            }
         }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
-            return 4;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
-            return 2;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
+        else{
             return 0;
         }
     }
 
     //Fungsi buat command Turn_Right
-    private int UseTurn_Right(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
-            return 5;
+    private int UseTurn_Right(boolean isBooster, boolean isNextBooster){
+        if (myCar.position.lane + 1 <= 3){
+            if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                return 5;
+            }
+            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                return 4;
+            }
+            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
+                return 1;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                return 3;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                return 2;
+            }
+            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                return 1;
+            }
+            else {
+                return 0;
+            }
         }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
-            return 4;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
-            return 2;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
+        else{
             return 0;
         }
     }
@@ -440,27 +480,27 @@ public class Bot {
         if (myCar.damage == 3 || (myCar.damage == 2 && hasPowerUp(PowerUps.BOOST))){
             return 5;
         }
-        if (myCar.damage == 2){
+        else if (myCar.damage == 2){
             return 4;
         }
-        if (myCar.damage == 1){
+        else if (myCar.damage == 1){
             return 3;
         }
-        if (myCar.damage == 0){
+        else {
             return 2;
         }
     }
 
     // Fungsi buat command do nothing
     private int UseDo_Nothing(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block)){
-            return 2;
+        if (isNabrak_turning(myCar.position.lane, myCar.position.block, myCar.boosting) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
+            return 0;
         }
-        if (!hasPowerUp(PowerUps.BOOST) && !hasPowerUp(PowerUps.OIL) && !hasPowerUp(PowerUps.TWEET) && !hasPowerUp(PowerUps.LIZARD) && !hasPowerUp(PowerUps.EMP)){
+        else if (!hasPowerUp(PowerUps.BOOST) && !hasPowerUp(PowerUps.OIL) && !hasPowerUp(PowerUps.TWEET) && !hasPowerUp(PowerUps.LIZARD) && !hasPowerUp(PowerUps.EMP)){
             return 1;
         }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
-            return 0;
+        else {
+            return 2;
         }
     }
 }

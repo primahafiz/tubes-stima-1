@@ -352,13 +352,13 @@ public class Bot {
     //     return 0;
     // }
     
-    // Fungsi buat ngecek apakah ada obstacle di depannya posisinya setelah Turn_Left
+    // Fungsi buat ngecek apakah ada obstacle di depannya posisinya
     private boolean isNabrakObstacleInfront_atCurrentLane(int lane, int curblock, boolean isBooster, boolean isNextBooster){
         int kerusakan = myCar.damage;
         int NextSpeed;
         Lane[] curLane = gameState.lanes.get(lane-1);
         int block = gameState.lanes.get(0)[0].position.block;
-        for (int i = max(curblock - block + 1, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
+        for (int i = max(curblock - block, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -369,7 +369,7 @@ public class Bot {
                 kerusakan += 2;
             }
         }
-        // Kecepatan mobil di next round ketika setelah Turn_Left
+        // Kecepatan mobil di next round ketika setelah satu round
         if (kerusakan == 5){
             NextSpeed = min(getCurSpeed(0, isNextBooster), 0);
         }

@@ -52,7 +52,7 @@ public class Bot {
         int startBlock = map.get(0)[0].position.block;
 
         Lane[] laneList = map.get(lane - 1);
-        for (int i = max(block - startBlock, 0); i <= block - startBlock + Bot.maxSpeed; i++) {
+        for (int i = max(block - startBlock, 0); i <= block - startBlock + myCar.speed; i++) {
             if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -200,6 +200,160 @@ public class Bot {
         }
     }
     
+    private int UseOil(){
+        // check is enemy behind you
+        boolean canHit = false;
+        if(myCar.position.block > opponent.position.block){
+            canHit = true;
+        }
+        // Check is there any obstacle
+        Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        int obstacleDMG = 0; 
+        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
+            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+                obstacleDMG += 2;
+            }
+            else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
+                obstacleDMG += 1;
+            }
+        }
+        // Cek is power_up exist
+        boolean hasPU = hasPowerUp(PowerUps.OIL);
+        
+        // ~Split CASE~
+        if(!(hasPU && canHit)){
+            return 0;
+        }
+        else if(hasPU && canHit && obstacleDMG > 2){
+            return 1;
+        }
+        else if(hasPU && canHit && obstacleDMG > 0){
+            return 2;
+        }
+        else if(hasPU && canHit && obstacleDMG == 0){
+            return 3;
+        }
+        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG > 0){
+            return 4;
+        }
+        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG == 0){
+            return 5;
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    private int UseEMP(){
+        // Check Enemy position
+        int curLaneIdx = myCar.position.lane-1;
+        boolean canHit = false;
+        if(myCar.position.block < opponent.position.block){
+            canHit = true;
+        }
+        for(int i = curLaneIdx-1; i <= curLaneIdx+1; i++){
+            canHit = false;
+            if(0<=i && i <=3){
+                if(i+1 == opponent.position.lane){
+                    canHit = true;
+                    break;
+                }
+            }
+        }
+        // Check is there Power_up
+        boolean hasPU = hasPowerUp(PowerUps.EMP);
+        // Check is there any obstacle
+        Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        int obstacleDMG = 0; 
+        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
+            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+                obstacleDMG += 2;
+            }
+            else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
+                obstacleDMG += 1;
+            }
+        }
+    
+        // ~Split CASE~
+        if(!(hasPU && canHit)){
+            return 0;
+        }
+        else if(hasPU && canHit && obstacleDMG > 2){
+            return 1;
+        }
+        else if(hasPU && canHit && obstacleDMG > 0){
+            return 2;
+        }
+        else if(hasPU && canHit && obstacleDMG == 0){
+            return 3;
+        }
+        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG > 0){
+            return 4;
+        }
+        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG == 0){
+            return 5;
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    private int UseLizard(){
+        // Check what terrain that will be skipped
+        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
+        boolean isWallTruck = blocks.contains((Terrain.WALL));  // Cybertruck apa?
+        boolean isMudOil = blocks.contains((Terrain.MUD)) || blocks.contains((Terrain.OIL_SPILL));
+        boolean isPowerUPskip = blocks.contains(Terrain.BOOST) || blocks.contains(Terrain.OIL_POWER) || blocks.contains(Terrain.EMP) || blocks.contains(Terrain.LIZARD) || blocks.contains(Terrain.TWEET);
+        
+        // Check what terrain while landing
+        Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        Terrain landing = curLane[myCar.position.block-startBlock+myCar.speed].terrain;
+        boolean safelandingWallTruck = (landing == Terrain.WALL);   // Cybertruck apa?
+        boolean safelandingMudOil = (landing == Terrain.MUD || landing == Terrain.OIL_SPILL);
+       
+        // Check is there power_up
+        boolean hasPU = hasPowerUp(PowerUps.LIZARD);
+        if( !(hasPU && (isWallTruck || isMudOil)) ){
+            return 0;
+        }
+        else if((hasPU && (isWallTruck || isMudOil)) && !(safelandingMudOil && safelandingWallTruck)){
+            return 1;
+        }
+        else if((hasPU) && (isMudOil) && (safelandingMudOil && safelandingWallTruck) && isPowerUPskip){
+            return 2;
+        }
+        else if((hasPU) && (isWallTruck) && (safelandingMudOil && safelandingWallTruck) && isPowerUPskip){
+            return 3;
+        }
+        else if((hasPU) && (isMudOil) && (safelandingMudOil && safelandingWallTruck) && !isPowerUPskip){
+            return 4;
+        }
+        else if((hasPU) && (isWallTruck) && (safelandingMudOil && safelandingWallTruck) && !isPowerUPskip){
+            return 5;
+        }
+        else{
+            return 0;
+        }
+    }
+    
+    // private int UseTweet(){
+    //     Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
+    //     boolean hasPU = hasPowerUp(PowerUps.TWEET);
+    //     if(!hasPU){
+    //         return 0;
+    //     }
+    //     if(myCar.speed==maxSpeed){
+    //         return 5;
+    //     }
+    
+    //     return 0;
+    // }
+    
+    
+
     // Fungsi buat ngecek apakah ada obstacle di depannya posisi  
     private boolean isNabrakObstacleInfront_atCurrentLane(int lane, int curblock){
         Lane[] curLane=gameState.lanes.get(lane-1);

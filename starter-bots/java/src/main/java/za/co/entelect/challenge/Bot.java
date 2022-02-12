@@ -125,8 +125,8 @@ public class Bot {
         int cntWallCyber=0;
         int cntMudOil=0;
         int cntBoost=0;
-        int block=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(block-myCar.position.block,0);i<=block-myCar.position.block+getCurSpeed(0, true);i++){
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+getCurSpeed(0, true);i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -155,8 +155,8 @@ public class Bot {
         int cntWallCyber=0;
         int cntMudOil=0;
         int cntBoost=0;
-        int block=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(block-myCar.position.block,0);i<=block-myCar.position.block+getCurSpeed(1, false);i++){
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+getCurSpeed(1, false);i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -183,8 +183,8 @@ public class Bot {
     private int UseDecelerate(){
         Lane[] curLane=gameState.lanes.get(myCar.position.lane-1);
         boolean flagBoost=false;;
-        int block=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(block-myCar.position.block,0);i<=block-myCar.position.block+getCurSpeed(-1, false);i++){
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+getCurSpeed(-1, false);i++){
             if(curLane[i].terrain==Terrain.BOOST){
                 flagBoost=true;
                 break;

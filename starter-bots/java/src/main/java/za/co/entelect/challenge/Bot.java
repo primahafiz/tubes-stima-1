@@ -18,7 +18,18 @@ public class Bot {
     private GameState gameState;
     private Car opponent;
     private Car myCar;
+
     private final static Command FIX = new FixCommand();
+    private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
+    private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
+    private final static Command LIZARD = new LizardCommand();
+    private final static Command BOOST = new BoostCommand();
+    private final static Command ACCELERATE = new AccelerateCommand();
+    private final static Command EMP = new EmpCommand();
+    // private final static Command TWEET = new 
+    private final static Command OIL = new OilCommand();
+    private final static Command DECELERATE = new DecelerateCommand();
+    private final static Command NOTHING = new DoNothingCommand();
 
     public Bot(Random random, GameState gameState) {
         this.random = random;
@@ -29,17 +40,70 @@ public class Bot {
         directionList.add(-1);
         directionList.add(1);
     }
-
+    
     public Command run() {
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
-        if (myCar.damage >= 5) {
-            return new FixCommand();
+        int com[] = new int[11];
+        com[0] = 0;
+        com[1] = 0;     // Turn Right
+        com[2] = 0;     // Turn Left
+        com[3] = UseLizard();
+        com[4] = UseBoost();
+        com[5] = UseAccelerate();
+        com[6] = UseEMP();
+        com[7] = 0;     // Use Tweet
+        com[8] = UseOil();
+        com[9] = UseDecelerate();
+        com[10] = 0;
+        int idxMax = -1;
+        int max = -1;
+        for(int i = 0; i < 11; i++){
+            if(com[i] > max){
+                max = com[i];
+                idxMax = i;
+            }
         }
-        if (blocks.contains(Terrain.MUD)) {
-            int i = random.nextInt(directionList.size());
-            return new ChangeLaneCommand(directionList.get(i));
+        if(max == 0){
+            idxMax = 10;
         }
-        return new AccelerateCommand();
+
+
+        // Fungsi seleksi
+        if(idxMax == 0){
+            return FIX;
+        }
+        else if(idxMax == 1){
+            return TURN_RIGHT;
+        }
+        else if(idxMax == 2){
+            return TURN_LEFT;
+        }
+        else if(idxMax == 3){
+            return LIZARD;
+        }
+        else if(idxMax == 4){
+            return BOOST;
+        }
+        else if(idxMax == 5){
+            return ACCELERATE;
+        }
+        else if(idxMax == 6){
+            return EMP;
+        }
+        else if(idxMax == 7){
+            return NOTHING;     // TWEET
+        }
+        else if(idxMax == 8){
+            return OIL;
+        }
+        else if(idxMax == 9){
+            return DECELERATE;
+        }
+        else if(idxMax == 10){
+            return NOTHING;
+        }
+        else{
+            return ACCELERATE;
+        }
     }
 
     /**
@@ -403,64 +467,64 @@ public class Bot {
         }
     }
 
-    // Fungsi buat coommand Turn_Left
-    private int UseTurn_Left(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
-            return 5;
-        }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
-            return 4;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
-            return 2;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
-            return 0;
-        }
-    }
+    // // Fungsi buat coommand Turn_Left
+    // private int UseTurn_Left(){
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
+    //         return 5;
+    //     }
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block) && !isNabrak_turnLeft(myCar.position.lane, myCar.position.block)){
+    //         return 4;
+    //     }
+    //     if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
+    //         return 2;
+    //     }
+    //     if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block)){
+    //         return 0;
+    //     }
+    // }
 
-    //Fungsi buat command Turn_Right
-    private int UseTurn_Right(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
-            return 5;
-        }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
-            return 4;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
-            return 2;
-        }
-        if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
-            return 0;
-        }
-    }
+    // //Fungsi buat command Turn_Right
+    // private int UseTurn_Right(){
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
+    //         return 5;
+    //     }
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block) && !isNabrak_turnRight(myCar.position.lane, myCar.position.block)){
+    //         return 4;
+    //     }
+    //     if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
+    //         return 2;
+    //     }
+    //     if (!isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block)){
+    //         return 0;
+    //     }
+    // }
 
-    // Fungsi buat command Fix
-    private int UseFix(){
-        if (myCar.damage == 3 || (myCar.damage == 2 && hasPowerUp(PowerUps.BOOST))){
-            return 5;
-        }
-        if (myCar.damage == 2){
-            return 4;
-        }
-        if (myCar.damage == 1){
-            return 3;
-        }
-        if (myCar.damage == 0){
-            return 2;
-        }
-    }
+    // // Fungsi buat command Fix
+    // private int UseFix(){
+    //     if (myCar.damage == 3 || (myCar.damage == 2 && hasPowerUp(PowerUps.BOOST))){
+    //         return 5;
+    //     }
+    //     if (myCar.damage == 2){
+    //         return 4;
+    //     }
+    //     if (myCar.damage == 1){
+    //         return 3;
+    //     }
+    //     if (myCar.damage == 0){
+    //         return 2;
+    //     }
+    // }
 
-    // Fungsi buat command do nothing
-    private int UseDo_Nothing(){
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block)){
-            return 2;
-        }
-        if (!hasPowerUp(PowerUps.BOOST) && !hasPowerUp(PowerUps.OIL) && !hasPowerUp(PowerUps.TWEET) && !hasPowerUp(PowerUps.LIZARD) && !hasPowerUp(PowerUps.EMP)){
-            return 1;
-        }
-        if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
-            return 0;
-        }
-    }
+    // // Fungsi buat command do nothing
+    // private int UseDo_Nothing(){
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block)){
+    //         return 2;
+    //     }
+    //     if (!hasPowerUp(PowerUps.BOOST) && !hasPowerUp(PowerUps.OIL) && !hasPowerUp(PowerUps.TWEET) && !hasPowerUp(PowerUps.LIZARD) && !hasPowerUp(PowerUps.EMP)){
+    //         return 1;
+    //     }
+    //     if (isNabrakObstacleInfront_atCurrentLane(myCar.position.lane, myCar.position.block) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
+    //         return 0;
+    //     }
+    // }
 }

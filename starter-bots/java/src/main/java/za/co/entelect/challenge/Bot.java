@@ -185,6 +185,9 @@ public class Bot {
         boolean flagBoost=false;;
         int startBlock=gameState.lanes.get(0)[0].position.block;
         for(int i=max(myCar.position.block-startBlock+1,0);i<=myCar.position.block-startBlock+getCurSpeed(-1, false);i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
             if(curLane[i].terrain==Terrain.BOOST){
                 flagBoost=true;
                 break;

@@ -316,15 +316,18 @@ public class Bot {
         if(myCar.position.block < opponent.position.block){
             canHit = true;
         }
-        for(int i = curLaneIdx-1; i <= curLaneIdx+1; i++){
-            canHit = false;
-            if(0<=i && i <=3){
-                if(i+1 == opponent.position.lane){
-                    canHit = true;
-                    break;
+        if(canHit){
+            for(int i = curLaneIdx-1; i <= curLaneIdx+1; i++){
+                canHit = false;
+                if(0<=i && i <=3){
+                    if(i+1 == opponent.position.lane){
+                        canHit = true;
+                        break;
+                    }
                 }
             }
         }
+        
         // Check is there Power_up
         boolean hasPU = hasPowerUp(PowerUps.EMP);
         // Check is there any obstacle

@@ -4,6 +4,8 @@ import za.co.entelect.challenge.command.*;
 import za.co.entelect.challenge.entities.*;
 import za.co.entelect.challenge.enums.PowerUps;
 import za.co.entelect.challenge.enums.Terrain;
+import java.io.FileWriter;   // Import the FileWriter class
+import java.io.IOException;  // Import the IOException class to handle errors
 
 import java.util.*;
 
@@ -18,7 +20,19 @@ public class Bot {
     private GameState gameState;
     private Car opponent;
     private Car myCar;
+    
+
     private final static Command FIX = new FixCommand();
+    private final static Command TURN_RIGHT = new ChangeLaneCommand(1);
+    private final static Command TURN_LEFT = new ChangeLaneCommand(-1);
+    private final static Command LIZARD = new LizardCommand();
+    private final static Command BOOST = new BoostCommand();
+    private final static Command ACCELERATE = new AccelerateCommand();
+    private final static Command EMP = new EmpCommand();
+    // private final static Command TWEET = new 
+    private final static Command OIL = new OilCommand();
+    private final static Command DECELERATE = new DecelerateCommand();
+    private final static Command NOTHING = new DoNothingCommand();
 
     public Bot(Random random, GameState gameState) {
         this.random = random;
@@ -31,15 +45,70 @@ public class Bot {
     }
 
     public Command run() {
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
-        if (myCar.damage >= 5) {
-            return new FixCommand();
+        int com[] = new int[11];
+        com[0] = UseFix();
+        com[1] = UseTurn_Right(myCar.boosting, myCar.boostCounter>1);     // Turn Right
+        com[2] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left
+        com[3] = UseLizard();
+        com[4] = UseBoost();
+        com[5] = UseAccelerate();
+        com[6] = UseEMP();
+        com[7] = 0;     // Use Tweet
+        com[8] = UseOil();
+        com[9] = UseDecelerate();
+        com[10] = UseDo_Nothing();
+
+
+        int idxMax = 0;
+        int maks = com[0];
+        for(int i = 1; i < 11; i++){
+            if(com[i] > maks){
+                maks = com[i];
+                idxMax = i;
+            }
         }
-        if (blocks.contains(Terrain.MUD)) {
-            int i = random.nextInt(directionList.size());
-            return new ChangeLaneCommand(directionList.get(i));
+        if(maks == 0){
+            idxMax = 10;
         }
-        return new AccelerateCommand();
+
+
+        // Fungsi seleksi
+        if(idxMax == 0){
+            return FIX;
+        }
+        else if(idxMax == 1){
+            return TURN_RIGHT;
+        }
+        else if(idxMax == 2){
+            return TURN_LEFT;
+        }
+        else if(idxMax == 3){
+            return LIZARD;
+        }
+        else if(idxMax == 4){
+            return BOOST;
+        }
+        else if(idxMax == 5){
+            return ACCELERATE;
+        }
+        else if(idxMax == 6){
+            return EMP;
+        }
+        else if(idxMax == 7){
+            return NOTHING;     // TWEET
+        }
+        else if(idxMax == 8){
+            return OIL;
+        }
+        else if(idxMax == 9){
+            return DECELERATE;
+        }
+        else if(idxMax == 10){
+            return NOTHING;
+        }
+        else{
+            return ACCELERATE;
+        }
     }
 
     /**
@@ -52,27 +121,25 @@ public class Bot {
         int startBlock = map.get(0)[0].position.block;
 
         Lane[] laneList = map.get(lane - 1);
-        for (int i = max(block - startBlock, 0); i <= block - startBlock + myCar.speed; i++) {
+        for (int i = max(block - startBlock, 0); i <= min(block - startBlock + myCar.speed,getMaxPos()); i++) {
             if (laneList[i] == null || laneList[i].terrain == Terrain.FINISH) {
                 break;
             }
-
             blocks.add(laneList[i].terrain);
-
         }
         return blocks;
     }
 
-    private int min(int a,int b){
-        if(a<b){
+    private int min(int a, int b){
+        if (a < b) {
             return a;
-        }else{
+        } else {
             return b;
         }
     }
 
     private boolean hasPowerUp(PowerUps a){
-        for(PowerUps x:myCar.powerups){
+        for (PowerUps x:myCar.powerups){
             if(x.equals(a)){
                 return true;
             }
@@ -119,6 +186,17 @@ public class Bot {
         return min(allSpeed[idx],getMaxSpeedByDamage());
     }
 
+    private int getMaxPos(){
+        Lane[] curLane=gameState.lanes.get(myCar.position.lane-1);
+        int startBlock=gameState.lanes.get(0)[0].position.block;
+        for (int i=max(myCar.position.block-startBlock+1,0);i<=myCar.position.block-startBlock+20;i++){
+            if (curLane[i]==null || curLane[i].terrain==Terrain.FINISH){
+                return i;
+            }
+        }
+        return 20;
+    }
+
 
     private int UseBoost(){
         Lane[] curLane=gameState.lanes.get(myCar.position.lane-1);
@@ -126,7 +204,7 @@ public class Bot {
         int cntMudOil=0;
         int cntBoost=0;
         int startBlock=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(myCar.position.block-startBlock+1,0);i<=myCar.position.block-startBlock+getCurSpeed(0, true);i++){
+        for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+getCurSpeed(0, true));i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -156,7 +234,7 @@ public class Bot {
         int cntMudOil=0;
         int cntBoost=0;
         int startBlock=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(myCar.position.block-startBlock+1,0);i<=myCar.position.block-startBlock+getCurSpeed(1, false);i++){
+        for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+getCurSpeed(1, false));i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -169,9 +247,9 @@ public class Bot {
         }
         if(cntWallCyber>0){
             return 0;
-        }else if(cntMudOil>0 && cntBoost==0){
+        }else if(cntMudOil > 0 && cntBoost == 0){
             return 1;
-        }else if(myCar.speed>=getCurSpeed(6,false) || (cntBoost==1 && cntMudOil>0)){
+        }else if(myCar.speed >= getCurSpeed(6,false) || (cntBoost == 1 && cntMudOil>0)){
             return 2;
         }else if(cntBoost>1 && cntMudOil>0){
             return 3;
@@ -184,7 +262,7 @@ public class Bot {
         Lane[] curLane=gameState.lanes.get(myCar.position.lane-1);
         boolean flagBoost=false;;
         int startBlock=gameState.lanes.get(0)[0].position.block;
-        for(int i=max(myCar.position.block-startBlock+1,0);i<=myCar.position.block-startBlock+getCurSpeed(-1, false);i++){
+        for (int i = max(myCar.position.block-startBlock+1,0); i <= min(getMaxPos(),myCar.position.block-startBlock+getCurSpeed(-1, false));i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -210,8 +288,10 @@ public class Bot {
         Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
         int startBlock=gameState.lanes.get(0)[0].position.block;
         int obstacleDMG = 0; 
-        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
-            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+        for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+myCar.speed);i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }else if(curLane[i].terrain==Terrain.WALL){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -267,8 +347,10 @@ public class Bot {
         Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
         int startBlock=gameState.lanes.get(0)[0].position.block;
         int obstacleDMG = 0; 
-        for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
-            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+        for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+myCar.speed);i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -310,7 +392,7 @@ public class Bot {
         // Check what terrain while landing
         Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
         int startBlock=gameState.lanes.get(0)[0].position.block;
-        Terrain landing = curLane[myCar.position.block-startBlock+myCar.speed].terrain;
+        Terrain landing=curLane[min(myCar.position.block-startBlock+myCar.speed,getMaxPos())].terrain;
         boolean safelandingWallTruck = (landing == Terrain.WALL);   // Cybertruck apa?
         boolean safelandingMudOil = (landing == Terrain.MUD || landing == Terrain.OIL_SPILL);
        
@@ -358,7 +440,7 @@ public class Bot {
         int NextSpeed;
         Lane[] curLane = gameState.lanes.get(lane-1);
         int block = gameState.lanes.get(0)[0].position.block;
-        for (int i = max(curblock - block, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
+        for (int i = max(curblock - block, 0); i <= min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster)); i++) {
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -389,7 +471,7 @@ public class Bot {
             NextSpeed = min(getCurSpeed(0, isNextBooster), 15);
         }
         // Buat cek apakah ada obstacle yang bakal ketabrak di depan bloknya
-        for (int i = curblock - block + getCurSpeed(0, isBooster) + 1; i <= curblock - block + getCurSpeed(0, isBooster) + NextSpeed; i++){
+        for (int i = curblock - block + getCurSpeed(0, isBooster) + 1; i <=min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster) + NextSpeed); i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -401,10 +483,10 @@ public class Bot {
     }
 
     // Fungsi untuk mengecek apakah bakal nabrak pada posisi tersebut
-    private boolean isNabrak_turning(int lane, int curblock, boolean isBooster){
+    private boolean isNabrakObstacle_turning(int lane, int curblock, boolean isBooster){
         Lane[] curLane=gameState.lanes.get(lane-1);
         int block = gameState.lanes.get(0)[0].position.block;
-        for (int i = max(curblock - block, 0); i <= curblock - block + getCurSpeed(0, isBooster); i++) {
+        for (int i = max(curblock - block, 0); i <= min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster)); i++) {
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
@@ -415,29 +497,105 @@ public class Bot {
         return false;
     }
 
+    // Fungsi buat ngecek apakah ada PowerUp di depannya posisinya
+    private boolean isNabrakPowerUpInfront_atCurrentLane(int lane, int curblock, boolean isBooster, boolean isNextBooster){
+        int kerusakan = myCar.damage;
+        int NextSpeed;
+        Lane[] curLane = gameState.lanes.get(lane-1);
+        int block = gameState.lanes.get(0)[0].position.block;
+        for (int i = max(curblock - block, 0); i <= min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster)); i++) {
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
+                kerusakan += 1;
+            }
+            else if (curLane[i].terrain==Terrain.WALL){
+                kerusakan += 2;
+            }
+        }
+        // Kecepatan mobil di next round ketika setelah satu round
+        if (kerusakan == 5){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 0);
+        }
+        else if (kerusakan == 4){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 3);
+        }
+        else if (kerusakan == 3){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 6);
+        }
+        else if (kerusakan == 2){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 8);
+        }
+        else if (kerusakan == 1){
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 9);
+        }
+        else{
+            NextSpeed = min(getCurSpeed(0, isNextBooster), 15);
+        }
+        // Buat cek apakah ada obstacle yang bakal ketabrak di depan bloknya
+        for (int i = curblock - block + getCurSpeed(0, isBooster) + 1; i <=min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster) + NextSpeed); i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.OIL_POWER || curLane[i].terrain==Terrain.BOOST || curLane[i].terrain==Terrain.EMP || curLane[i].terrain==Terrain.TWEET || curLane[i].terrain==Terrain.LIZARD){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Fungsi untuk mengecek apakah bakal nabrak power up atua tidak pada posisi tersebut
+    private boolean isNabrakpowerUp_turning(int lane, int curblock, boolean isBooster){
+        Lane[] curLane=gameState.lanes.get(lane-1);
+        int block = gameState.lanes.get(0)[0].position.block;
+        for (int i = max(curblock - block, 0); i <= min(getMaxPos(),curblock - block + getCurSpeed(0, isBooster)); i++) {
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if (curLane[i].terrain==Terrain.OIL_POWER || curLane[i].terrain==Terrain.BOOST || curLane[i].terrain==Terrain.EMP || curLane[i].terrain==Terrain.TWEET || curLane[i].terrain==Terrain.LIZARD){
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Fungsi buat coommand Turn_Left
     private int UseTurn_Left(boolean isBooster, boolean isNextBooster){
-        if (myCar.position.lane - 1 >= 0){
-            if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
-                return 5;
+        if (myCar.position.lane - 1 > 0){
+            if (isNabrakpowerUp_turning(myCar.position.lane-1, myCar.position.block, isBooster) || isNabrakpowerUp_turning(myCar.position.lane, myCar.position.block, isBooster) || isNabrakPowerUpInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                    return 5;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                    return 4;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
+                    return 1;
+                }
+                else if (!isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
+                    return 2;
+                }
+                else{
+                    return 0;
+                }
             }
-            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
-                return 4;
-            }
-            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
-                return 1;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
-                return 3;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
-                return 2;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
-                return 1;
-            }
-            else {
-                return 0;
+            else{
+                if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                    return 4;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane-1, myCar.position.block, isBooster, isNextBooster)){
+                    return 3;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
+                    return 0;
+                }
+                else if (!isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane-1, myCar.position.block, isBooster)){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
             }
         }
         else{
@@ -447,27 +605,40 @@ public class Bot {
 
     //Fungsi buat command Turn_Right
     private int UseTurn_Right(boolean isBooster, boolean isNextBooster){
-        if (myCar.position.lane + 1 <= 3){
-            if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
-                return 5;
+        if (myCar.position.lane - 1 < 3){
+            if (isNabrakpowerUp_turning(myCar.position.lane+1, myCar.position.block, isBooster) || isNabrakpowerUp_turning(myCar.position.lane, myCar.position.block, isBooster) || isNabrakPowerUpInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                    return 5;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                    return 4;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
+                    return 1;
+                }
+                else if (!isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
+                    return 2;
+                }
+                else{
+                    return 0;
+                }
             }
-            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
-                return 4;
-            }
-            else if (isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
-                return 1;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
-                return 3;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
-                return 2;
-            }
-            else if (!isNabrak_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrak_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
-                return 1;
-            }
-            else {
-                return 0;
+            else{
+                if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster) && !isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                    return 4;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster) && isNabrakObstacleInfront_atCurrentLane(myCar.position.lane+1, myCar.position.block, isBooster, isNextBooster)){
+                    return 3;
+                }
+                else if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
+                    return 0;
+                }
+                else if (!isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, isBooster) && !isNabrakObstacle_turning(myCar.position.lane+1, myCar.position.block, isBooster)){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
             }
         }
         else{
@@ -477,23 +648,23 @@ public class Bot {
 
     // Fungsi buat command Fix
     private int UseFix(){
-        if (myCar.damage == 3 || (myCar.damage == 2 && hasPowerUp(PowerUps.BOOST))){
+        if (myCar.damage >= 3 || (myCar.damage >= 2 && hasPowerUp(PowerUps.BOOST))){
             return 5;
         }
-        else if (myCar.damage == 2){
+        else if (myCar.damage >= 2){
             return 4;
         }
-        else if (myCar.damage == 1){
+        else if (myCar.damage >= 1){
             return 3;
         }
         else {
-            return 2;
+            return 0;
         }
     }
 
     // Fungsi buat command do nothing
     private int UseDo_Nothing(){
-        if (isNabrak_turning(myCar.position.lane, myCar.position.block, myCar.boosting) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
+        if (isNabrakObstacle_turning(myCar.position.lane, myCar.position.block, myCar.boosting) || hasPowerUp(PowerUps.BOOST) || hasPowerUp(PowerUps.OIL) || hasPowerUp(PowerUps.TWEET) || hasPowerUp(PowerUps.LIZARD) || hasPowerUp(PowerUps.EMP)){
             return 0;
         }
         else if (!hasPowerUp(PowerUps.BOOST) && !hasPowerUp(PowerUps.OIL) && !hasPowerUp(PowerUps.TWEET) && !hasPowerUp(PowerUps.LIZARD) && !hasPowerUp(PowerUps.EMP)){

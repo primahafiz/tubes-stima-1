@@ -275,7 +275,10 @@ public class Bot {
         int startBlock=gameState.lanes.get(0)[0].position.block;
         int obstacleDMG = 0; 
         for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
-            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -335,7 +338,10 @@ public class Bot {
         int startBlock=gameState.lanes.get(0)[0].position.block;
         int obstacleDMG = 0; 
         for(int i=max(myCar.position.block-startBlock,0);i<=myCar.position.block-startBlock+myCar.speed;i++){
-            if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }
+            else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -369,14 +375,25 @@ public class Bot {
     
     private int UseLizard(){
         // Check what terrain that will be skipped
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
-        boolean isWallTruck = blocks.contains((Terrain.WALL));  // Cybertruck apa?
-        boolean isMudOil = blocks.contains((Terrain.MUD)) || blocks.contains((Terrain.OIL_SPILL));
-        boolean isPowerUPskip = blocks.contains(Terrain.BOOST) || blocks.contains(Terrain.OIL_POWER) || blocks.contains(Terrain.EMP) || blocks.contains(Terrain.LIZARD) || blocks.contains(Terrain.TWEET);
+        boolean isWallTruck = false;  // Cybertruck apa?
+        boolean isMudOil = false;
+        boolean isPowerUPskip = false;
         
-        // Check what terrain while landing
         Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
         int startBlock=gameState.lanes.get(0)[0].position.block;
+        for(int i=max(myCar.position.block-startBlock,0); i<=myCar.position.block-startBlock+myCar.speed-1; i++){   // Batas akhir dikurang 1
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }else if( (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL) && !isMudOil ){
+                isMudOil = true;
+            }else if( (curLane[i].terrain==Terrain.WALL) && !isWallTruck ){
+                isWallTruck = true;     // nama obstacle tweet apa?
+            }else if( (curLane[i].terrain==Terrain.BOOST || curLane[i].terrain==Terrain.OIL_POWER || curLane[i].terrain==Terrain.EMP || curLane[i].terrain==Terrain.LIZARD ||curLane[i].terrain==Terrain.TWEET) && !isPowerUPskip ){
+                isPowerUPskip = true;
+            }
+        }
+        
+        // Check what terrain while landing
         Terrain landing = curLane[myCar.position.block-startBlock+myCar.speed].terrain;
         boolean safelandingWallTruck = (landing == Terrain.WALL);   // Cybertruck apa?
         boolean safelandingMudOil = (landing == Terrain.MUD || landing == Terrain.OIL_SPILL);
@@ -399,6 +416,9 @@ public class Bot {
             return 4;
         }
         else if((hasPU) && (isWallTruck) && (safelandingMudOil && safelandingWallTruck) && !isPowerUPskip){
+            return 5;
+        }
+        else if( (hasPU) && !(isWallTruck || isMudOil) && !isPowerUPskip && (safelandingMudOil && safelandingWallTruck) ){
             return 5;
         }
         else{

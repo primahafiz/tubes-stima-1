@@ -47,16 +47,16 @@ public class Bot {
     public Command run() {
         int com[] = new int[11];
         com[0] = UseFix();
-        com[1] = UseTurn_Right(myCar.boosting, myCar.boostCounter>1);     // Turn Right
-        com[2] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left
-        com[3] = UseLizard();
-        com[4] = UseBoost();
-        com[5] = UseAccelerate();
-        com[6] = UseEMP();
+        com[1] = UseBoost();
+        com[2] = UseAccelerate();
+        com[3] = UseEMP();
+        com[4] = UseLizard();
+        com[5] = UseTurn_Right(myCar.boosting, myCar.boostCounter>1);     // Turn Right
+        com[6] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left
         com[7] = 0;     // Use Tweet
         com[8] = UseOil();
-        com[9] = UseDecelerate();
-        com[10] = UseDo_Nothing();
+        com[9] = UseDo_Nothing();
+        com[10] = UseDecelerate();
 
 
         int idxMax = 0;
@@ -67,32 +67,28 @@ public class Bot {
                 idxMax = i;
             }
         }
-        if(maks == 0){
-            idxMax = 10;
-        }
-
 
         // Fungsi seleksi
         if(idxMax == 0){
             return FIX;
         }
         else if(idxMax == 1){
-            return TURN_RIGHT;
-        }
-        else if(idxMax == 2){
-            return TURN_LEFT;
-        }
-        else if(idxMax == 3){
-            return LIZARD;
-        }
-        else if(idxMax == 4){
             return BOOST;
         }
-        else if(idxMax == 5){
+        else if(idxMax == 2){
             return ACCELERATE;
         }
-        else if(idxMax == 6){
+        else if(idxMax == 3){
             return EMP;
+        }
+        else if(idxMax == 4){
+            return LIZARD;
+        }
+        else if(idxMax == 5){
+            return TURN_RIGHT;
+        }
+        else if(idxMax == 6){
+            return TURN_LEFT;
         }
         else if(idxMax == 7){
             return NOTHING;     // TWEET
@@ -101,10 +97,10 @@ public class Bot {
             return OIL;
         }
         else if(idxMax == 9){
-            return DECELERATE;
+            return NOTHING;
         }
         else if(idxMax == 10){
-            return NOTHING;
+            return DECELERATE;
         }
         else{
             return ACCELERATE;

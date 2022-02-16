@@ -237,8 +237,8 @@ public class Bot {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
                 cntMudOil++;
-            }else if(curLane[i].terrain==Terrain.WALL){
-                cntWallCyber++;// nama obstacle tweet apa?
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
+                cntWallCyber++;
             }else if(curLane[i].terrain==Terrain.BOOST){
                 cntBoost++;
             }
@@ -291,7 +291,7 @@ public class Bot {
         for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+myCar.speed);i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
-            }else if(curLane[i].terrain==Terrain.WALL){
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -351,7 +351,7 @@ public class Bot {
         for(int i=max(myCar.position.block-startBlock+1,0);i<=min(getMaxPos(),myCar.position.block-startBlock+myCar.speed);i++){
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
-            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.TWEET){
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 obstacleDMG += 2;
             }
             else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
@@ -461,7 +461,7 @@ public class Bot {
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
-            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 return true;
             }
         }
@@ -476,7 +476,7 @@ public class Bot {
             if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
                 break;
             }
-            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL){
+            else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL || curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 return true;
             }
         }
@@ -496,7 +496,7 @@ public class Bot {
             else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
                 kerusakan += 1;
             }
-            else if (curLane[i].terrain==Terrain.WALL){
+            else if (curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 kerusakan += 2;
             }
         }

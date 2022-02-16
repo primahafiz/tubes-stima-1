@@ -420,19 +420,6 @@ public class Bot {
         }
     }
     
-    // private int UseTweet(){
-    //     Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
-    //     boolean hasPU = hasPowerUp(PowerUps.TWEET);
-    //     if(!hasPU){
-    //         return 0;
-    //     }
-    //     if(myCar.speed==maxSpeed){
-    //         return 5;
-    //     }
-    
-    //     return 0;
-    // }
-    
     // Fungsi buat ngecek apakah ada obstacle di depannya posisinya
     private boolean isNabrakObstacleInfront_atCurrentLane(int lane, int curblock, boolean isBooster, boolean isNextBooster){
         int kerusakan = myCar.damage;

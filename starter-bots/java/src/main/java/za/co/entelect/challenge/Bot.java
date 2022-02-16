@@ -205,8 +205,8 @@ public class Bot {
                 break;
             }else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
                 cntMudOil++;
-            }else if(curLane[i].terrain==Terrain.WALL){
-                cntWallCyber++;// nama obstacle tweet apa?
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
+                cntWallCyber++;
             }else if(curLane[i].terrain==Terrain.BOOST){
                 cntBoost++;
             }
@@ -219,8 +219,10 @@ public class Bot {
             return 2;
         }else if(cntBoost>1 && cntMudOil>0){
             return 3;
-        }else{
+        }else if(myCar.damage==0){
             return 5;
+        }else{
+            return 4;
         }
     }
 
@@ -241,14 +243,16 @@ public class Bot {
                 cntBoost++;
             }
         }
-        if(cntWallCyber>0){
+        if(myCar.speed==0){
+            return 5;
+        }else if(cntWallCyber>0){
             return 0;
         }else if(cntMudOil > 0 && cntBoost == 0){
             return 1;
-        }else if(myCar.speed >= getCurSpeed(6,false) || (cntBoost == 1 && cntMudOil>0)){
+        }else if(myCar.speed >= getCurSpeed(6,false)){
             return 2;
-        }else if(cntBoost>1 && cntMudOil>0){
-            return 3;
+        }else if(cntBoost == 1 && cntMudOil>0){
+            return 4;
         }else{
             return 5;
         }
@@ -267,7 +271,7 @@ public class Bot {
                 break;
             }
         }
-        if(flagBoost && UseAccelerate()!=5){
+        if(flagBoost && UseAccelerate()<4){
             return 4;
         }else{
             return 1;
@@ -322,18 +326,19 @@ public class Bot {
     }
     
     private int UseEMP(){
-        // Check Enemy position
         int curLaneIdx = myCar.position.lane-1;
         boolean canHit = false;
         if(myCar.position.block < opponent.position.block){
             canHit = true;
         }
-        for(int i = curLaneIdx-1; i <= curLaneIdx+1; i++){
-            canHit = false;
-            if(0<=i && i <=3){
-                if(i+1 == opponent.position.lane){
-                    canHit = true;
-                    break;
+        if(canHit){
+            for(int i = curLaneIdx-1; i <= curLaneIdx+1; i++){
+                canHit = false;
+                if(0<=i && i <=3){
+                    if(i+1 == opponent.position.lane){
+                        canHit = true;
+                        break;
+                    }
                 }
             }
         }
@@ -370,7 +375,7 @@ public class Bot {
         else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG > 0){
             return 4;
         }
-        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG == 0){
+        else if(hasPU && canHit && myCar.speed==maxSpeed && obstacleDMG == 0 && myCar.position.lane==opponent.position.lane){
             return 5;
         }
         else{
@@ -379,40 +384,38 @@ public class Bot {
     }
     
     private int UseLizard(){
-        // Check what terrain that will be skipped
-        List<Object> blocks = getBlocksInFront(myCar.position.lane, myCar.position.block);
-        boolean isWallTruck = blocks.contains((Terrain.WALL));  // Cybertruck apa?
-        boolean isMudOil = blocks.contains((Terrain.MUD)) || blocks.contains((Terrain.OIL_SPILL));
-        boolean isPowerUPskip = blocks.contains(Terrain.BOOST) || blocks.contains(Terrain.OIL_POWER) || blocks.contains(Terrain.EMP) || blocks.contains(Terrain.LIZARD) || blocks.contains(Terrain.TWEET);
-        
-        // Check what terrain while landing
+        // Check is there Power_up
+        boolean hasPU = hasPowerUp(PowerUps.LIZARD);
+        // Check is there any obstacle
         Lane[] curLane = gameState.lanes.get(myCar.position.lane-1);
         int startBlock=gameState.lanes.get(0)[0].position.block;
-        Terrain landing=curLane[min(myCar.position.block-startBlock+myCar.speed,getMaxPos())].terrain;
-        boolean safelandingWallTruck = (landing == Terrain.WALL);   // Cybertruck apa?
-        boolean safelandingMudOil = (landing == Terrain.MUD || landing == Terrain.OIL_SPILL);
-       
-        // Check is there power_up
-        boolean hasPU = hasPowerUp(PowerUps.LIZARD);
-        if( !(hasPU && (isWallTruck || isMudOil)) ){
+        int obstacleDMG = 0;
+        int numPowerup=0;
+        boolean safeLanding=myCar.position.block-startBlock+myCar.speed>getMaxPos()?true:(curLane[myCar.position.block-startBlock+myCar.speed].terrain!=Terrain.MUD && curLane[myCar.position.block-startBlock+myCar.speed].terrain!=Terrain.OIL_SPILL && curLane[myCar.position.block-startBlock+myCar.speed].terrain!=Terrain.WALL && curLane[myCar.position.block-startBlock+myCar.speed].terrain!=Terrain.CYBER_TRUCK);
+        for(int i=max(myCar.position.block-startBlock+1,0);i<min(getMaxPos(),myCar.position.block-startBlock+myCar.speed);i++){
+            if (curLane[i] == null || curLane[i].terrain == Terrain.FINISH) {
+                break;
+            }else if(curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
+                obstacleDMG += 2;
+            }
+            else if(curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
+                obstacleDMG += 1;
+            }else if(curLane[i].terrain==Terrain.BOOST || curLane[i].terrain==Terrain.EMP){
+                numPowerup++;
+            }
+        }
+        int turn=max(UseTurn_Left(gameState.player.boosting, gameState.player.boostCounter>1),UseTurn_Right(gameState.player.boosting, gameState.player.boostCounter>1));
+        if(!hasPU && turn>=4){
             return 0;
-        }
-        else if((hasPU && (isWallTruck || isMudOil)) && !(safelandingMudOil && safelandingWallTruck)){
+        }else if(!safeLanding && obstacleDMG<=2){
             return 1;
-        }
-        else if((hasPU) && (isMudOil) && (safelandingMudOil && safelandingWallTruck) && isPowerUPskip){
-            return 2;
-        }
-        else if((hasPU) && (isWallTruck) && (safelandingMudOil && safelandingWallTruck) && isPowerUPskip){
+        }else if(!safeLanding && obstacleDMG>2){
             return 3;
-        }
-        else if((hasPU) && (isMudOil) && (safelandingMudOil && safelandingWallTruck) && !isPowerUPskip){
+        }else if(obstacleDMG>=2 && numPowerup>0){
             return 4;
-        }
-        else if((hasPU) && (isWallTruck) && (safelandingMudOil && safelandingWallTruck) && !isPowerUPskip){
+        }else if((obstacleDMG>=2 && numPowerup==0) || obstacleDMG>3){
             return 5;
-        }
-        else{
+        }else{
             return 0;
         }
     }
@@ -443,7 +446,7 @@ public class Bot {
             else if (curLane[i].terrain==Terrain.MUD || curLane[i].terrain==Terrain.OIL_SPILL){
                 kerusakan += 1;
             }
-            else if (curLane[i].terrain==Terrain.WALL){
+            else if (curLane[i].terrain==Terrain.WALL || curLane[i].terrain==Terrain.CYBER_TRUCK){
                 kerusakan += 2;
             }
         }
@@ -644,7 +647,7 @@ public class Bot {
 
     // Fungsi buat command Fix
     private int UseFix(){
-        if (myCar.damage >= 3 || (myCar.damage >= 2 && hasPowerUp(PowerUps.BOOST))){
+        if (myCar.damage >= 3 || (myCar.damage >= 2 && hasPowerUp(PowerUps.BOOST)) && getMaxPos()>myCar.speed){
             return 5;
         }
         else if (myCar.damage >= 2){

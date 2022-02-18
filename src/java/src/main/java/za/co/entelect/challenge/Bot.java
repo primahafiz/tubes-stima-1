@@ -55,10 +55,18 @@ public class Bot {
         com[3] = UseEMP();
         com[4] = UseLizard();
         com[5] = UseTurn_Right(myCar.boosting, myCar.boostCounter>1);     // Turn Right
+<<<<<<< HEAD:src/java/src/main/java/za/co/entelect/challenge/Bot.java
         com[6] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left 
         com[7] = UseOil();
         com[8] = UseDo_Nothing();
         com[9] = UseDecelerate();
+=======
+        com[6] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left
+        com[7] = 0;     // Use Tweet
+        com[8] = UseOil();
+        com[9] = UseDo_Nothing();
+        com[10] = UseDecelerate();
+>>>>>>> parent of 6c31614 (Update Bot.java):starter-bots/java/src/main/java/za/co/entelect/challenge/Bot.java
 
         // Cari command dengan prioritas terbesar
 
@@ -94,6 +102,12 @@ public class Bot {
             return TURN_LEFT;
         }
         else if(idxMax == 7){
+<<<<<<< HEAD:src/java/src/main/java/za/co/entelect/challenge/Bot.java
+=======
+            return NOTHING;     // TWEET
+        }
+        else if(idxMax == 8){
+>>>>>>> parent of 6c31614 (Update Bot.java):starter-bots/java/src/main/java/za/co/entelect/challenge/Bot.java
             return OIL;
         }
         else if(idxMax == 8){

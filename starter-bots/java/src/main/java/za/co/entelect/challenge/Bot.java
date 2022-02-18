@@ -53,7 +53,7 @@ public class Bot {
         com[4] = UseLizard();
         com[5] = UseTurn_Right(myCar.boosting, myCar.boostCounter>1);     // Turn Right
         com[6] = UseTurn_Left(myCar.boosting, myCar.boostCounter>1);     // Turn Left
-        com[7] = 0;     // Use Tweet
+        com[7] = 0;    
         com[8] = UseOil();
         com[9] = UseDo_Nothing();
         com[10] = UseDecelerate();
@@ -91,7 +91,7 @@ public class Bot {
             return TURN_LEFT;
         }
         else if(idxMax == 7){
-            return NOTHING;     // TWEET
+            return NOTHING;     
         }
         else if(idxMax == 8){
             return OIL;

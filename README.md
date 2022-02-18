@@ -22,6 +22,6 @@ https://github.com/EntelectChallenge/2020-Overdrive/releases/tag/2020.3.4
 
 
 ## Author : Kelompok SpotyCar
-Primanda Adyatma Hafiz - 13520022
-Rahmat Rafid Akbar - 13520090
-Muhammad Gilang Ramadhan - 13520137
+- Primanda Adyatma Hafiz - 13520022
+- Rahmat Rafid Akbar - 13520090
+- Muhammad Gilang Ramadhan - 13520137

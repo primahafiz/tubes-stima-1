@@ -1,0 +1,10 @@
+======================================================================================================
+round:40
+player: id:1 position: y:3 x:319 speed:8 state:DECELERATING statesThatOccurredThisRound:DECELERATING boosting:false boost-counter:0 damage:0 score:119 powerups: BOOST:1, LIZARD:6, EMP:3, TWEET:5
+opponent: id:2 position: y:1 x:281 speed:9
+
+[░░░░░░░░░░░░░░░░T░░░░░░░░░]
+[░░░░░░▓░░▓▓▓░░#░░░░░░░░░░░]
+[░░*░»1░░░░░*▓▓▓▓»»░░░░░░░░]
+[*░░▓▓▓▓Φ▓▓░░░░░░░░░*░░░#░░]
+======================================================================================================

@@ -1,0 +1,10 @@
+======================================================================================================
+round:155
+player: id:1 position: y:2 x:1156 speed:9 state:HIT_OIL statesThatOccurredThisRound:ACCELERATING, HIT_OIL boosting:false boost-counter:0 damage:1 score:271 powerups: OIL:8, LIZARD:10, EMP:2, TWEET:15
+opponent: id:2 position: y:2 x:1180 speed:9
+
+[░░░░░░░░░▓░░░░▓░░░░░░∱░░░░]
+[░░█*░1»░░░░░░░░░░»░░░░░░░░]
+[░░T░░░░░░▓░░░░░░░░░░░░T░░░]
+[░░░░░░░░░▓▓▓▓▓░░*░░░░░░░░░]
+======================================================================================================
